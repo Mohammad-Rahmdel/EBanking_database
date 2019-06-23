@@ -114,6 +114,7 @@ Create Table Bill(
 	id int auto_increment,
 	eventTime timestamp,
     fund float,
+    AccountNumber int,
     description text,
     billType varchar(16),
     primary key(id),
@@ -122,8 +123,10 @@ Create Table Bill(
 
 
 Create Table Bill_deletion_backup(
+	id int,
 	eventTime timestamp,
     fund float,
+    AccountNumber int,
     description text,
     billType varchar(16)
 );
