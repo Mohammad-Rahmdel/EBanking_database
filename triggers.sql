@@ -1,6 +1,6 @@
 -- use mysql; 
 -- CREATE DATABASE test; 
--- use test;
+-- use test; 
 
 DELIMITER $$
 create trigger grant_access_log after insert on Role
@@ -137,6 +137,40 @@ DELIMITER ;
 
 
 DELIMITER $$
+create trigger Payment_updator_edit after update on Transactions
+	for each row 
+	begin
+		 update Payment 
+         set total = total - old.amount + new.amount
+         where Payment.paymentNumber = old.paymentNumber ;
+	end$$
+DELIMITER ;
+
+
+
+
+DELIMITER $$
+create trigger Payment_edit_checker before update on Payment
+	for each row 
+	begin
+		 IF exists (
+         select *
+         from Signatures natural join Payment
+         where paymentNumber = old.paymentNumber)
+			 THEN BEGIN
+				
+                IF (old.note<>new.note or old.creatorNumber<>new.creatorNumber or old.sourceAccountNumber<>
+                new.sourceAccountNumber) THEN BEGIN
+					SIGNAL sqlstate '45001' set message_text = "Payment edition is not allowed";
+				END;
+                END IF;
+		 END;
+         END IF;
+	end$$
+DELIMITER ;
+
+
+DELIMITER $$
 create trigger Sign_authority_checker before insert on Signatures
 	for each row begin
 		IF new.customerNumber not in (
@@ -160,9 +194,18 @@ create trigger Sign_canceling_checker before delete on Signatures
         THEN BEGIN
 			SIGNAL sqlstate '45001' set message_text = "Cancel Sign Not Allowed";
 		END;
+	else
+		begin
+			DECLARE accountNo INT;
+			SET accountNo = (select sourceAccountNumber from Signatures natural join Payment 
+			where paymentNumber=old.paymentNumber);
+			insert into accountslogs values(accountNo , 'remove sign', current_timestamp);
+        end;
 	END IF;
     END$$
 DELIMITER ;
+
+
 
 
 
@@ -197,7 +240,6 @@ DELIMITER ;
 
 
 
-
 DELIMITER $$
 create trigger Payment_Confirmation_Results after update on Payment
 
@@ -208,15 +250,18 @@ create trigger Payment_Confirmation_Results after update on Payment
     
     DECLARE accountNo INT;
     DECLARE accountAmount FLOAT;
+
     
 	IF Old.state = 0 and New.state = 1 THEN BEGIN
+    
+		insert into accountslogs values(old.sourceAccountNumber , 'payment', current_timestamp);
     
 		update Accounts 
 		set balance = balance - new.total 
 		where accountNumber = NEW.sourceAccountNumber ;
 	
     
-        insert into Bill(eventTime, fund, description, billType)  values(curdate(), new.total, 'description', 'send'); 
+        insert into Bill(eventTime, fund, AccountNumber, description, billType)  values(curdate(), new.total, NEW.sourceAccountNumber, 'description', 'send'); 
     
     
         SET j = (
@@ -224,9 +269,9 @@ create trigger Payment_Confirmation_Results after update on Payment
         where paymentNumber = NEW.paymentNumber);
         
         WHILE i < j DO
-			INSERT INTO Bill(eventTime, fund, description, billType) 
-			SELECT current_timestamp(), sub.amount, 'description', 'receieve'
-            FROM (select amount from Payment natural join Transactions
+			INSERT INTO Bill(eventTime, fund, AccountNumber, description, billType) 
+			SELECT current_timestamp(), sub.amount, sub.dAN, 'description', 'receieve'
+            FROM (select amount, destinationAccountNumber dAN from Payment natural join Transactions
 			where paymentNumber = NEW.paymentNumber) as sub
 			LIMIT i,1;
             
@@ -258,3 +303,28 @@ create trigger Payment_Confirmation_Results after update on Payment
     END; END IF;
 END$$
 DELIMITER ;
+
+
+
+
+DELIMITER $$
+create trigger accountlog_creation after insert on Accounts
+FOR EACH ROW BEGIN
+	insert into accountslogs values(new.accountNumber , 'creation', current_timestamp);
+END$$
+DELIMITER ;
+
+
+
+DELIMITER $$
+create trigger accountlog_add_sign after insert on Signatures
+FOR EACH ROW BEGIN
+	DECLARE accountNo INT;
+    SET accountNo = (select sourceAccountNumber from Signatures natural join Payment 
+    where paymentNumber=new.paymentNumber and customerNumber=new.customerNumber);
+    
+	insert into accountslogs values(accountNo , 'add sign', current_timestamp);
+END$$
+DELIMITER ;
+
+
