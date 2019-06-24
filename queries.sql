@@ -1,10 +1,3 @@
-select * from Signatures
-select * from Accounts
-select * from Payment 
-select * from Transactions
-select * from Bill
-select * from Role
-
 -- Q1
 select * from customers_with_sign_authority;
     
