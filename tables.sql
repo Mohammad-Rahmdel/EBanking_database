@@ -197,6 +197,14 @@ Create Table accessLogs(
 );
 
 
+create table accountslogs(
+	AccountNumber int,
+    logtype varchar(32),
+    logTime timestamp,
+    check(logtype in ('creation', 'add sign', 'remove sign', 'payment'))
+);
+
+
 
 
 
