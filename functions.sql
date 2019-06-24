@@ -72,6 +72,18 @@ end $$
 DELIMITER ;
 
 
+delimiter $$
+CREATE PROCEDURE tables_info(tableName varchar(32))
+	begin
+	SELECT CREATE_TIME, UPDATE_TIME
+	FROM INFORMATION_SCHEMA.TABLES
+    WHERE table_name = tableName;
+end $$
+DELIMITER ;
+
+call tables_info('Payment')
+
+
 
 create view customers_with_sign_authority as
 select distinct customerNumber
@@ -87,3 +99,7 @@ on A.accountNumber=P.sourceAccountNumber) sub
 where role = 'sign'
 group by accountNumber, NoSignatures
 having NoSignatures <= signs;
+
+
+
+
