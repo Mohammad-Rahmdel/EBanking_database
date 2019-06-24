@@ -81,8 +81,6 @@ CREATE PROCEDURE tables_info(tableName varchar(32))
 end $$
 DELIMITER ;
 
-call tables_info('Payment');
-
 
 
 create view customers_with_sign_authority as

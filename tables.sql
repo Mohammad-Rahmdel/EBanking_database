@@ -1,6 +1,7 @@
 -- use mysql;
 
 drop table IF EXISTS accessLogs;
+drop table IF EXISTS accountslogs;
 drop table IF EXISTS Signatures;
 drop table IF EXISTS Transactions;
 drop table IF EXISTS Payment;
@@ -78,7 +79,7 @@ Create table Accounts(
     accountColor varchar(32),
     accountName varchar(32),
     primary key(accountNumber),
-    check(accountColor in ('charity', 'current', 'saving'))
+    check(accountType in ('charity', 'current', 'saving'))
 );
 
 

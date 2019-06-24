@@ -198,7 +198,7 @@ create trigger Sign_canceling_checker before delete on Signatures
 		begin
 			DECLARE accountNo INT;
 			SET accountNo = (select sourceAccountNumber from Signatures natural join Payment 
-			where paymentNumber=old.paymentNumber);
+			where paymentNumber=old.paymentNumber and customerNumber=old.customerNumber);
 			insert into accountslogs values(accountNo , 'remove sign', current_timestamp);
         end;
 	END IF;
