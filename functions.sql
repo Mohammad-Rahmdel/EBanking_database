@@ -81,24 +81,24 @@ CREATE PROCEDURE tables_info(tableName varchar(32))
 end $$
 DELIMITER ;
 
-call tables_info('Payment')
+call tables_info('Payment');
 
 
 
 create view customers_with_sign_authority as
-select distinct customerNumber
-from Signatures;
+	select distinct customerNumber
+	from Signatures;
 
 
 create view ready_payments as 
-select accountNumber, NoSignatures, count(*) as signs
-from Role natural join
-(select NoSignatures, accountNumber
-from Payment P inner join Accounts A 
-on A.accountNumber=P.sourceAccountNumber) sub
-where role = 'sign'
-group by accountNumber, NoSignatures
-having NoSignatures <= signs;
+	select accountNumber, NoSignatures, count(*) as signs
+	from Role natural join
+	(select NoSignatures, accountNumber
+	from Payment P inner join Accounts A 
+	on A.accountNumber=P.sourceAccountNumber) sub
+	where role = 'sign'
+	group by accountNumber, NoSignatures
+	having NoSignatures <= signs;
 
 
 
